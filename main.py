@@ -34,9 +34,9 @@ if __name__ == '__main__':
     print(len(vor.regions))
     print(len(vor.points))
 
-    land = []
+    world = []
     for p in vor.points:
-        land.append([0.0, p])
+        world.append([0.0, p])
     #for r in vor.regions:
     idx = 0
 
@@ -47,29 +47,29 @@ if __name__ == '__main__':
      #   row = []
       #  for y in range(0,len(vor.points)):
        #     noise_val = 0.2 + noise1([x*scale/len(vor.points)*scale,y*scale/len(vor.points)*scale])
-       #     land[idx] = [noise_val, land[idx][1]]
+       #     world[idx] = [noise_val, world[idx][1]]
        #     row.append(noise_val)
       #  pic.append(row)
 
      #   if idx < len(vor.points):
        #     idx += 1
 
-    for cell in land:
+    for cell in world:
         row = []
         # creating noise
-        x = land[idx][1][0]
-        y = land[idx][1][1]
+        x = world[idx][1][0]
+        y = world[idx][1][1]
         noise_val = 0.2 + noise1([x * scale / len(vor.points) * scale, y * scale / len(vor.points) * scale])
         noise_val = noise_val + noise2([x * scale / len(vor.points) * scale, y * scale / len(vor.points) * scale])
 
-        land[idx] = [noise_val, land[idx][1]]
+        world[idx] = [noise_val, world[idx][1]]
         row.append(noise_val)
         pic.append(row)
 
         if idx < len(vor.points):
             idx += 1
 
-    for cell in land:
+    for cell in world:
 
         # coloring cells
         point_index = np.argmin(np.sum((points - cell[1]) ** 2, axis=1))

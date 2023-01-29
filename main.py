@@ -8,52 +8,21 @@ def distance(p1,p2):
     dist = np.linalg.norm(p1 - p2)
     return dist
 
-
-if __name__ == '__main__':
-    seed = 185948245
-    np.random.seed(seed)
-    world_size = 38
+def generate_voronoi_points(size):
     points = []
     idx = 0
-    for i in range(0,world_size):
-        for j in range(0,world_size):
+    for i in range(0,size):
+        for j in range(0,size):
             offset = np.random.rand() * 0.45
             if (np.random.rand() > 0.5):
                 offset *= -1
             points.append([i+offset,j+offset])
             idx += 1
     points = np.array(points)
-    vor = Voronoi(points)
-    voronoi_plot_2d(vor, show_vertices=False)
-    tri = Delaunay(points)
+    return points
 
-    noise1 = PerlinNoise(octaves=3,seed=seed)
-    noise2 = PerlinNoise(octaves=6,seed=seed)
-
-
-    print(len(vor.regions))
-    print(len(vor.points))
-
-    world = []
-    for p in vor.points:
-        world.append([0.0, p])
-    #for r in vor.regions:
+def generate_noise(world, scale):
     idx = 0
-
-    scale = 6
-    pic = []
-
-    ### for x in range(0,len(vor.points)):
-     #   row = []
-      #  for y in range(0,len(vor.points)):
-       #     noise_val = 0.2 + noise1([x*scale/len(vor.points)*scale,y*scale/len(vor.points)*scale])
-       #     world[idx] = [noise_val, world[idx][1]]
-       #     row.append(noise_val)
-      #  pic.append(row)
-
-     #   if idx < len(vor.points):
-       #     idx += 1
-
     for cell in world:
         row = []
         # creating noise
@@ -64,11 +33,43 @@ if __name__ == '__main__':
 
         world[idx] = [noise_val, world[idx][1]]
         row.append(noise_val)
-        pic.append(row)
 
         if idx < len(vor.points):
             idx += 1
 
+def add_edge_noise(vor, num_of_line_segments):
+    last_visited = []
+    idx = 0
+    for simplex in vor.ridge_vertices:
+        pts = []
+
+        simplex = np.asarray(simplex)
+        line_noise = noise2([idx/len(vor.ridge_vertices),idx/len(vor.ridge_vertices)])
+
+        first_pt = vor.vertices[simplex,0]
+        last_pt = vor.vertices[simplex,1]
+        pts.append(first_pt)
+        if first_pt[0] > last_pt[0] or first_pt[1] > last_pt[1]:
+            diff = first_pt-last_pt
+            for n in range(1,4):
+                pt = last_pt+(n*diff/4)
+                pts.append(pt)
+
+        elif last_pt[0] > first_pt[0] or last_pt[1] > first_pt[1]:
+            diff = last_pt - first_pt
+            for n in range(1,4):
+                pt = first_pt+(n*diff/4)
+                pts.append(pt)
+
+
+        pts.append(last_pt)
+
+        for i in range(0,len(points)):
+            if i > 0:
+                if np.all(simplex >= 0):
+                    plt.plot(points[i-1], points[i], 'k-')
+
+def color_cells(world,vor):
     for cell in world:
 
         # coloring cells
@@ -78,7 +79,6 @@ if __name__ == '__main__':
         region = [x for x in vor.regions if set(x) == vertex_set][0]
         if not -1 in region:
             polygon = vor.vertices[region]
-            print(cell)
             if 0.15 < cell[0] < 0.25:
                 plt.fill(*zip(*polygon), color='c')
             elif 0.25 < cell[0] < 0.4:
@@ -91,8 +91,35 @@ if __name__ == '__main__':
                 plt.fill(*zip(*polygon), color='white')
             else:
                 plt.fill(*zip(*polygon), color='blue')
-    #    for idx in r:
-    #        print(vor.vertices[idx])
+
+if __name__ == '__main__':
+    seed = 185948245
+    np.random.seed(seed)
+    world_size = 36
+
+    points = generate_voronoi_points(world_size)
+
+    vor = Voronoi(points)
+    voronoi_plot_2d(vor, show_vertices=False)
+    tri = Delaunay(points)
+
+    noise1 = PerlinNoise(octaves=3,seed=seed)
+    noise2 = PerlinNoise(octaves=6,seed=seed)
+
+    print(len(vor.regions))
+    print(len(vor.points))
+
+    world = []
+    for p in vor.points:
+        world.append([0.0, p])
+
+    scale = 4
+
+    generate_noise(world,scale)
+
+    #add_edge_noise(vor,5)
+
+    color_cells(world,vor)
+
     plt.figure(dpi=500)
-    #plt.imshow(pic, cmap='gray', alpha=1)
     plt.show()
